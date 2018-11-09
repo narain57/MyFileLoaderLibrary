@@ -11,10 +11,16 @@ public class FileLoaderBuilder {
     public Context context;
     public String url;
     public View view;
+    public long cacheLimit;
 
 
     public FileLoaderBuilder setContext(Context context) {
         this.context = context;
+        return this;
+    }
+
+    public FileLoaderBuilder setCacheLimit(long value) {
+        this.cacheLimit = value;
         return this;
     }
 

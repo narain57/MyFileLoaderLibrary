@@ -22,12 +22,13 @@ public class MyFileLoader {
     private final String url;
     private final View view;
     private Map<ImageView, String> map=Collections.synchronizedMap(new WeakHashMap<ImageView, String>());
-    MemoryCache memoryCache=new MemoryCache();
+    MemoryCache memoryCache;
 
     public MyFileLoader(FileLoaderBuilder fileLoaderBuilder) {
         this.context = fileLoaderBuilder.context;
         this.url = fileLoaderBuilder.url;
         this.view = fileLoaderBuilder.view;
+        new MemoryCache(fileLoaderBuilder.cacheLimit);
     }
 
     public Object load(FileType type)
