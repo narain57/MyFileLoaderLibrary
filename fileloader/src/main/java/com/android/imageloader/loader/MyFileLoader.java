@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import com.android.imageloader.builder.FileLoaderBuilder;
 import com.android.imageloader.cache.MemoryCache;
+import com.android.imageloader.callback.FutureCallBack;
 import com.android.imageloader.downloader.MyDownLoader;
 import com.android.imageloader.utils.FileType;
 
@@ -31,7 +32,7 @@ public class MyFileLoader {
         new MemoryCache(fileLoaderBuilder.cacheLimit);
     }
 
-    public Object load(FileType type)
+    public void load(FileType type,FutureCallBack<Object> callBack)
     {
         //If type is a Image then view needs to be ImageView
         if(type.equals(FileType.IMAGE)) {
@@ -40,7 +41,7 @@ public class MyFileLoader {
                 if (view != null)
                     ((ImageView) view).setImageBitmap(bitmap);
                 else
-                    return bitmap;
+                    callBack.onCompleted(bitmap);
             }
             else {
                 MyDownLoader downloader = new MyDownLoader(context, memoryCache, map);
@@ -52,13 +53,16 @@ public class MyFileLoader {
                 if (view != null)
                     ((TextView) view).setText(content);
                 else
-                    return content;
+                    callBack.onCompleted(content);
             }
             else {
                 MyDownLoader downloader = new MyDownLoader(context, memoryCache, map);
                 downloader.queue(url, view,type);
             }
         }
-        return "";
+    }
+
+    public void cancel(){
+
     }
 }

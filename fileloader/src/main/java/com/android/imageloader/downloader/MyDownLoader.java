@@ -12,6 +12,7 @@ import java.net.URL;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.FutureTask;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -33,6 +34,7 @@ public class MyDownLoader {
     private final Map<ImageView, String> map;
     FileCache fileCache;
     ExecutorService executorService;
+    FutureTask future;
 
     public MyDownLoader(Context context, MemoryCache cache,Map<ImageView, String> map){
         executorService=Executors.newFixedThreadPool(5);
@@ -44,7 +46,11 @@ public class MyDownLoader {
     public void queue(String url, View view, FileType type)
     {
         FileToLoad p=new FileToLoad(url, view);
-        executorService.submit(new FileLoaderTask(p,memoryCache,this, map,type));
+        future = (FutureTask) executorService.submit(new FileLoaderTask(p,memoryCache,this, map,type));
+    }
+
+    public void cancelTask(){
+        future.cancel(true);
     }
 
     public Bitmap getBitmap(String url)
