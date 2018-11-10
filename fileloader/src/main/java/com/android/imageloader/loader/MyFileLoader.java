@@ -20,7 +20,6 @@ import java.util.WeakHashMap;
 public class MyFileLoader {
 
     private final Context context;
-    private Map<ImageView, String> map=Collections.synchronizedMap(new WeakHashMap<ImageView, String>());
     private Map<String, MyDownLoader> downloaderMap=Collections.synchronizedMap(new WeakHashMap<String, MyDownLoader>());
 
     MemoryCache memoryCache = new MemoryCache();
@@ -38,11 +37,10 @@ public class MyFileLoader {
             if (bitmap != null) {
                 if (view != null)
                     ((ImageView) view).setImageBitmap(bitmap);
-                else
                     callBack.onCompleted(bitmap);
             }
             else {
-                MyDownLoader downloader = new MyDownLoader(context, memoryCache, map);
+                MyDownLoader downloader = new MyDownLoader(context, memoryCache,callBack);
                 downloaderMap.put(url,downloader);
                 downloader.queue(url, view,type);
             }
@@ -51,7 +49,6 @@ public class MyFileLoader {
             if (!TextUtils.isEmpty(content)) {
                 if (view != null)
                     ((TextView) view).setText(content);
-                else
                     callBack.onCompleted(content);
             }
             else {

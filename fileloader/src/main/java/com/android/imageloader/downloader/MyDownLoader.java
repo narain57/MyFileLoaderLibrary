@@ -33,44 +33,31 @@ import com.android.imageloader.worker.FileLoaderTask;
 
 public class MyDownLoader {
 
-    private final MemoryCache memoryCache;
+    private  MemoryCache memoryCache;
     private FutureCallBack<Object> callback;
     private Map<ImageView, String> map;
     FileCache fileCache;
     ExecutorService executorService;
     FutureTask future;
-    private Map<String, FutureTask> taskMap=Collections.synchronizedMap(new WeakHashMap<String, FutureTask>());
+    private Map<String, ExecutorService> taskMap=Collections.synchronizedMap(new WeakHashMap<String, ExecutorService>());
 
 
-    public MyDownLoader(Context context, MemoryCache cache,Map<ImageView, String> map){
+    public MyDownLoader(Context context, MemoryCache cache,FutureCallBack<Object> callBack){
         executorService=Executors.newFixedThreadPool(5);
         fileCache=new FileCache(context);
         this.memoryCache = cache;
-        this.map =map;
-    }
-
-    public MyDownLoader(Context context, MemoryCache memoryCache,FutureCallBack<Object> callBack) {
-        executorService=Executors.newFixedThreadPool(5);
-        fileCache=new FileCache(context);
-        this.memoryCache = memoryCache;
         this.callback = callBack;
     }
 
     public void queue(String url, View view, FileType type)
     {
         FileToLoad p=new FileToLoad(url, view);
-        if(type.equals(FileType.IMAGE)) {
-            future = (FutureTask) executorService.submit(new FileLoaderTask(p, memoryCache, this, map, type));
-            taskMap.put(url,future);
-        }
-        else {
-            future = (FutureTask) executorService.submit(new FileLoaderTask(p, memoryCache, this, callback, type));
-            taskMap.put(url,future);
-        }
+        future = (FutureTask) executorService.submit(new FileLoaderTask(p, memoryCache, this, callback, type));
+        taskMap.put(url,executorService);
     }
 
     public void cancelTask(String url){
-        taskMap.get(url).cancel(true);
+        taskMap.get(url).shutdownNow();
     }
 
     public Bitmap getBitmap(String url)

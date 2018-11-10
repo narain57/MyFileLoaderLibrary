@@ -17,23 +17,15 @@ import java.util.Map;
 import static com.android.imageloader.utils.Utils.imageViewReused;
 
 public class FileLoaderTask implements Runnable {
-    private final MemoryCache memoryCache;
-    private final MyDownLoader downloader;
+    private  MemoryCache memoryCache;
+    private  MyDownLoader downloader;
     private Map<ImageView, String> views;
-    private final FileType type;
+    private  FileType type;
     private FutureCallBack<Object> callback;
     private FileToLoad fileToLoad;
 
-    public FileLoaderTask(FileToLoad fileToLoad, MemoryCache memoryCache, MyDownLoader myImageDownLoader, Map<ImageView, String> map,FileType type){
+    public FileLoaderTask(FileToLoad fileToLoad, MemoryCache memoryCache, MyDownLoader myImageDownLoader,FutureCallBack<Object> callback, FileType type){
         this.fileToLoad = fileToLoad;
-        this.memoryCache = memoryCache;
-        this.downloader = myImageDownLoader;
-        this.views = map;
-        this.type = type;
-    }
-
-    public FileLoaderTask(FileToLoad p, MemoryCache memoryCache, MyDownLoader myImageDownLoader, FutureCallBack<Object> callback, FileType type) {
-        this.fileToLoad = p;
         this.memoryCache = memoryCache;
         this.downloader = myImageDownLoader;
         this.callback = callback;
@@ -43,10 +35,12 @@ public class FileLoaderTask implements Runnable {
     @Override
     public void run() {
         if(type.equals(FileType.IMAGE)){
+            if(Thread.interrupted())
+                return;
             Bitmap bmp = downloader.getBitmap(fileToLoad.url);
             memoryCache.put(fileToLoad.url, bmp);
             if(fileToLoad.view!=null) {
-                BitmapDisplayer bd = new BitmapDisplayer(bmp, fileToLoad, views);
+                BitmapDisplayer bd = new BitmapDisplayer(bmp, fileToLoad,callback);
                 Activity a = (Activity) fileToLoad.view.getContext();
                 a.runOnUiThread(bd);
             }
