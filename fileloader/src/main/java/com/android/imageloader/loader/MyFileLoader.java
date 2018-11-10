@@ -20,19 +20,17 @@ import java.util.WeakHashMap;
 public class MyFileLoader {
 
     private final Context context;
-    private final String url;
-    private final View view;
     private Map<ImageView, String> map=Collections.synchronizedMap(new WeakHashMap<ImageView, String>());
-    MemoryCache memoryCache;
+    private Map<String, MyDownLoader> downloaderMap=Collections.synchronizedMap(new WeakHashMap<String, MyDownLoader>());
+
+    MemoryCache memoryCache = new MemoryCache();
 
     public MyFileLoader(FileLoaderBuilder fileLoaderBuilder) {
         this.context = fileLoaderBuilder.context;
-        this.url = fileLoaderBuilder.url;
-        this.view = fileLoaderBuilder.view;
-        new MemoryCache(fileLoaderBuilder.cacheLimit);
+        memoryCache.setLimit(fileLoaderBuilder.cacheLimit);
     }
 
-    public void load(FileType type,FutureCallBack<Object> callBack)
+    public void load(FileType type,String url,View view,FutureCallBack<Object> callBack)
     {
         //If type is a Image then view needs to be ImageView
         if(type.equals(FileType.IMAGE)) {
@@ -45,24 +43,26 @@ public class MyFileLoader {
             }
             else {
                 MyDownLoader downloader = new MyDownLoader(context, memoryCache, map);
+                downloaderMap.put(url,downloader);
                 downloader.queue(url, view,type);
             }
         } else {
             String content = (String)memoryCache.get(url);
-            if (TextUtils.isEmpty(content)) {
+            if (!TextUtils.isEmpty(content)) {
                 if (view != null)
                     ((TextView) view).setText(content);
                 else
                     callBack.onCompleted(content);
             }
             else {
-                MyDownLoader downloader = new MyDownLoader(context, memoryCache, map);
+                MyDownLoader downloader = new MyDownLoader(context, memoryCache,callBack);
+                downloaderMap.put(url,downloader);
                 downloader.queue(url, view,type);
             }
         }
     }
 
-    public void cancel(){
-
+    public void cancel(String imageUrl){
+        downloaderMap.get(imageUrl).cancelTask(imageUrl);
     }
 }

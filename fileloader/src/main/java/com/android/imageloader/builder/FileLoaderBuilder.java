@@ -9,8 +9,6 @@ public class FileLoaderBuilder {
 
     // optional parameters
     public Context context;
-    public String url;
-    public View view;
     public long cacheLimit;
 
 
@@ -21,16 +19,6 @@ public class FileLoaderBuilder {
 
     public FileLoaderBuilder setCacheLimit(long value) {
         this.cacheLimit = value;
-        return this;
-    }
-
-    public FileLoaderBuilder setUrl(String url) {
-        this.url = url;
-        return this;
-    }
-
-    public FileLoaderBuilder setView(View view) {
-        this.view = view;
         return this;
     }
 

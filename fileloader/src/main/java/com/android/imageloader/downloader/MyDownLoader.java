@@ -9,7 +9,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Collections;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.FutureTask;
@@ -23,6 +25,7 @@ import android.widget.ImageView;
 import com.android.imageloader.R;
 import com.android.imageloader.cache.FileCache;
 import com.android.imageloader.cache.MemoryCache;
+import com.android.imageloader.callback.FutureCallBack;
 import com.android.imageloader.model.FileToLoad;
 import com.android.imageloader.utils.FileType;
 import com.android.imageloader.utils.Utils;
@@ -31,10 +34,13 @@ import com.android.imageloader.worker.FileLoaderTask;
 public class MyDownLoader {
 
     private final MemoryCache memoryCache;
-    private final Map<ImageView, String> map;
+    private FutureCallBack<Object> callback;
+    private Map<ImageView, String> map;
     FileCache fileCache;
     ExecutorService executorService;
     FutureTask future;
+    private Map<String, FutureTask> taskMap=Collections.synchronizedMap(new WeakHashMap<String, FutureTask>());
+
 
     public MyDownLoader(Context context, MemoryCache cache,Map<ImageView, String> map){
         executorService=Executors.newFixedThreadPool(5);
@@ -43,14 +49,28 @@ public class MyDownLoader {
         this.map =map;
     }
 
+    public MyDownLoader(Context context, MemoryCache memoryCache,FutureCallBack<Object> callBack) {
+        executorService=Executors.newFixedThreadPool(5);
+        fileCache=new FileCache(context);
+        this.memoryCache = memoryCache;
+        this.callback = callBack;
+    }
+
     public void queue(String url, View view, FileType type)
     {
         FileToLoad p=new FileToLoad(url, view);
-        future = (FutureTask) executorService.submit(new FileLoaderTask(p,memoryCache,this, map,type));
+        if(type.equals(FileType.IMAGE)) {
+            future = (FutureTask) executorService.submit(new FileLoaderTask(p, memoryCache, this, map, type));
+            taskMap.put(url,future);
+        }
+        else {
+            future = (FutureTask) executorService.submit(new FileLoaderTask(p, memoryCache, this, callback, type));
+            taskMap.put(url,future);
+        }
     }
 
-    public void cancelTask(){
-        future.cancel(true);
+    public void cancelTask(String url){
+        taskMap.get(url).cancel(true);
     }
 
     public Bitmap getBitmap(String url)
@@ -86,27 +106,6 @@ public class MyDownLoader {
 
     public String loadFile(String url) throws IOException {
 
-        File file= fileCache.getFile(url);
-        InputStream is = new FileInputStream(file);
-
-        long length = file.length();
-        if (length > Integer.MAX_VALUE) {
-            // File is too large
-        }
-        byte[] bytes = new byte[(int)length];
-
-        int offset = 0;
-        int numRead = 0;
-        while (offset < bytes.length
-                && (numRead=is.read(bytes, offset, bytes.length-offset)) >= 0) {
-            offset += numRead;
-        }
-
-        if (offset < bytes.length) {
-            throw new IOException("Could not completely read file "+file.getName());
-        }
-
-        is.close();
-        return bytes.toString();
+        return fileCache.getString(url);
     }
 }

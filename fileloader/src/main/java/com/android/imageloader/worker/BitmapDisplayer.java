@@ -21,8 +21,6 @@ public class BitmapDisplayer implements Runnable
     }
     public void run()
     {
-        if(Utils.imageViewReused(fileToLoad,views))
-            return;
         if(bitmap!=null)
             ((ImageView)fileToLoad.view).setImageBitmap(bitmap);
         else
